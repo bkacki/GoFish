@@ -63,7 +63,14 @@ namespace GoFish
         /// <returns>The cards that were pulled out of the other player's hand</returns>
         public IEnumerable<Card> DoYouHaveAny(Values value, Deck deck)
         {
-            throw new NotImplementedException();
+            var matchingCards = hand.Where(card => card.Value == value).OrderBy(card => card.Suit);
+            hand = hand.Where(card => card.Value != value).ToList();
+
+            if(hand.Count() == 0)
+                GetNextHand(deck);
+
+            return matchingCards;
+
         }
         /// <summary>
         /// When the player receives cards from another player, adds them to the hand
@@ -72,7 +79,14 @@ namespace GoFish
         /// <param name="cards">Cards from the other player to add</param>
         public void AddCardsAndPullOutBooks(IEnumerable<Card> cards)
         {
-            throw new NotImplementedException();
+            hand.AddRange(cards.ToArray());
+
+            var booksFound = hand.GroupBy(card => card.Value).Where(group => group.Count() == 4).Select(group => group.Key);
+
+            books.AddRange(booksFound);
+            books.Sort();
+
+            hand = hand.Where(card => !books.Contains(card.Value)).ToList();
         }
         /// <summary>
         /// Draws a card from the stock and add it to the player's hand
@@ -80,13 +94,15 @@ namespace GoFish
         /// <param name="stock">Stock to draw a card from</param>
         public void DrawCard(Deck stock)
         {
-            throw new NotImplementedException();
+            if (stock.Count() > 0)
+                AddCardsAndPullOutBooks(new List<Card> { stock.Deal(0) });
         }
         /// <summary>
         /// Gets a random value from the player's hand
         /// </summary>
         /// <returns>The value of a randomly selected card in the player's hand</returns>
-        public Values RandomValueFromHand() => throw new NotImplementedException();
+        public Values RandomValueFromHand() => hand.OrderBy(card => card.Value)
+            .Select(card => card.Value).Skip(Random.Next(hand.Count()-1)).First();
         public override string ToString() => Name;
     }
 }
